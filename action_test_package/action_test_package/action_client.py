@@ -17,12 +17,12 @@ class FibonacciActionClient(Node):
         self.check = 0
         self.command_flag = False
         self.cancel_flag = False
+        self.get_logger().info('Fibonacci action client has been started.')
 
     def action_flag_callback(self, msg):
         if msg.data == 1:
             if self.goal_handle is not None:  # goal_handle이 유효한지 확인
                 if not self.cancel_flag:
-                    self.get_logger().info('Cancel goal...')
                     self.cancelTask()
                     self.cancel_flag = True
             else:
@@ -49,19 +49,17 @@ class FibonacciActionClient(Node):
         self._send_goal_future.add_done_callback(self.goal_response_callback)
 
     def goal_response_callback(self, future):
-        goal_handle = future.result()
+        self.goal_handle = future.result()
         
-        if not goal_handle.accepted:
+        if not self.goal_handle.accepted:
             self.get_logger().info('Goal rejected :(')
             return
-        
-        self.goal_handle = goal_handle  # goal_handle 초기화
 
         self.get_logger().info('Goal accepted :)')
 
-        self._get_result_future = goal_handle.get_result_async()
+        self._get_result_future = self.goal_handle.get_result_async()
         self._get_result_future.add_done_callback(self.get_result_callback)
-    
+
     def get_result_callback(self, future):
         result = future.result().result
         self.get_logger().info('Result: {0}'.format(result.sequence))
